@@ -1,0 +1,42 @@
+
+name: Build Malaysia Ghuri APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install SDK
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Extract Android project
+        run: |
+          unzip -q Malaysia_Ghuri_Android_GitHub_Build.zip -d project
+          PROJECT_DIR=$(dirname "$(find project -name settings.gradle -print -quit)")
+          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
+
+      - name: Build APK
+        run: gradle -p "$PROJECT_DIR" assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Malaysia-Ghuri-APK
+          path: project/**/app/build/outputs/apk/debug/*.apk
